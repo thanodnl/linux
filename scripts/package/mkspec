@@ -49,6 +49,7 @@ sed -e '/^DEL/d' -e 's/^\t*//' <<EOF
 	URL: https://www.kernel.org
 $S	Source: kernel-$__KERNELRELEASE.tar.gz
 	Provides: $PROVIDES
+	Requires(postun): coreutils
 	%define __spec_install_post /usr/lib/rpm/brp-compress || :
 	%define debug_package %{nil}
 
@@ -112,6 +113,7 @@ $S$M	ln -sf /usr/src/kernels/$KERNELRELEASE source
 	cp /boot/vmlinuz-$KERNELRELEASE /boot/.vmlinuz-$KERNELRELEASE-rpm
 	cp /boot/System.map-$KERNELRELEASE /boot/.System.map-$KERNELRELEASE-rpm
 	rm -f /boot/vmlinuz-$KERNELRELEASE /boot/System.map-$KERNELRELEASE
+	touch /boot/.config
 	/sbin/installkernel $KERNELRELEASE /boot/.vmlinuz-$KERNELRELEASE-rpm /boot/.System.map-$KERNELRELEASE-rpm
 	rm -f /boot/.vmlinuz-$KERNELRELEASE-rpm /boot/.System.map-$KERNELRELEASE-rpm
 	fi
@@ -126,6 +128,17 @@ $S$M	ln -sf /usr/src/kernels/$KERNELRELEASE source
 	%postun
 	if [ -x /sbin/update-bootloader ]; then
 	/sbin/update-bootloader --remove $KERNELRELEASE
+	else
+	rm /boot/linux-$KERNELRELEASE.cfg
+	if [ ! -e /boot/mariner.cfg ]
+	then
+	     ls /boot/linux-*.cfg 1> /dev/null 2>&1
+	     if [ \$? -eq 0 ]
+	     then
+	          list=\`ls -tu /boot/linux-*.cfg | head -n1\`
+	          test -n "\$list" && ln -sf "\$list" /boot/mariner.cfg
+	     fi
+	fi
 	fi
 
 	%files
