@@ -1883,8 +1883,10 @@ unmap_and_free_vma:
 free_vma:
 	vm_area_free(vma);
 unacct_error:
-	if (charged)
+	if (charged){
 		vm_unacct_memory(charged);
+		memcg_unacct_memory(mm, charged);
+	}
 	return error;
 }
 
@@ -2628,6 +2630,7 @@ static void remove_vma_list(struct mm_struct *mm, struct vm_area_struct *vma)
 		vma = remove_vma(vma);
 	} while (vma);
 	vm_unacct_memory(nr_accounted);
+	memcg_unacct_memory(mm, nr_accounted);
 	validate_mm(mm);
 }
 
@@ -3066,6 +3069,7 @@ static int do_brk_flags(unsigned long addr, unsigned long len, unsigned long fla
 	vma = vm_area_alloc(mm);
 	if (!vma) {
 		vm_unacct_memory(len >> PAGE_SHIFT);
+		memcg_unacct_memory(mm, len >> PAGE_SHIFT);
 		return -ENOMEM;
 	}
 
@@ -3182,6 +3186,7 @@ void exit_mmap(struct mm_struct *mm)
 		cond_resched();
 	}
 	vm_unacct_memory(nr_accounted);
+	memcg_unacct_memory(mm, nr_accounted);
 }
 
 /* Insert vm structure into process list sorted by address

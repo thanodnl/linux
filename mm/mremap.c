@@ -624,8 +624,10 @@ static unsigned long move_vma(struct vm_area_struct *vma,
 	new_vma = copy_vma(&vma, new_addr, new_len, new_pgoff,
 			   &need_rmap_locks);
 	if (!new_vma) {
-		if (vm_flags & VM_ACCOUNT)
+		if (vm_flags & VM_ACCOUNT){
 			vm_unacct_memory(to_account >> PAGE_SHIFT);
+			memcg_unacct_memory(mm, to_account >> PAGE_SHIFT);
+		}
 		return -ENOMEM;
 	}
 
@@ -1025,6 +1027,7 @@ SYSCALL_DEFINE5(mremap, unsigned long, addr, unsigned long, old_len,
 			if (vma_adjust(vma, vma->vm_start, addr + new_len,
 				       vma->vm_pgoff, NULL)) {
 				vm_unacct_memory(pages);
+				memcg_unacct_memory(mm, pages);
 				ret = -ENOMEM;
 				goto out;
 			}

@@ -884,6 +884,32 @@ unsigned long vm_memory_committed(void)
 }
 EXPORT_SYMBOL_GPL(vm_memory_committed);
 
+
+int __memcg_enough_memory(struct mm_struct *mm, long pages)
+{
+	struct mem_cgroup *memcg = get_mem_cgroup_from_mm(mm);
+	while (memcg)
+	{
+		percpu_counter_add(&memcg->committed, pages);
+		memcg = parent_mem_cgroup(memcg);
+	}
+
+	return 0;
+}
+
+
+void memcg_unacct_memory(struct mm_struct *mm, long pages)
+{
+	struct mem_cgroup *memcg = get_mem_cgroup_from_mm(mm);
+	while (memcg)
+	{
+		percpu_counter_add(&memcg->committed, -pages);
+		memcg = parent_mem_cgroup(memcg);
+	}
+}
+
+
+
 /*
  * Check that a process has enough memory to allocate a new virtual
  * mapping. 0 means there is enough memory for the allocation to
@@ -904,12 +930,8 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 {
 	long allowed;
 
-	struct mem_cgroup *memcg = get_mem_cgroup_from_mm(mm);
-	while (memcg)
-	{
-		percpu_counter_add(&memcg->committed, pages);
-		memcg = parent_mem_cgroup(memcg);
-	}
+	if (!__memcg_enough_memory(mm, pages))
+		return -ENOMEM;
 
 	vm_acct_memory(pages);
 
@@ -945,6 +967,7 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 		return 0;
 error:
 	vm_unacct_memory(pages);
+	memcg_unacct_memory(mm, pages);
 
 	return -ENOMEM;
 }

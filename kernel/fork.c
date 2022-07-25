@@ -631,6 +631,7 @@ fail_nomem_policy:
 fail_nomem:
 	retval = -ENOMEM;
 	vm_unacct_memory(charge);
+	memcg_unacct_memory(oldmm, charge);
 	goto out;
 }
 

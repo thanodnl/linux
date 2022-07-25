@@ -170,8 +170,10 @@ static inline int shmem_acct_size(unsigned long flags, loff_t size)
 
 static inline void shmem_unacct_size(unsigned long flags, loff_t size)
 {
-	if (!(flags & VM_NORESERVE))
+	if (!(flags & VM_NORESERVE)) {
 		vm_unacct_memory(VM_ACCT(size));
+		memcg_unacct_memory(current->mm, VM_ACCT(size));
+	}
 }
 
 static inline int shmem_reacct_size(unsigned long flags,
@@ -181,8 +183,10 @@ static inline int shmem_reacct_size(unsigned long flags,
 		if (VM_ACCT(newsize) > VM_ACCT(oldsize))
 			return security_vm_enough_memory_mm(current->mm,
 					VM_ACCT(newsize) - VM_ACCT(oldsize));
-		else if (VM_ACCT(newsize) < VM_ACCT(oldsize))
+		else if (VM_ACCT(newsize) < VM_ACCT(oldsize)) {
 			vm_unacct_memory(VM_ACCT(oldsize) - VM_ACCT(newsize));
+			memcg_unacct_memory(current->mm, VM_ACCT(oldsize) - VM_ACCT(newsize));
+		}
 	}
 	return 0;
 }
@@ -204,8 +208,10 @@ static inline int shmem_acct_block(unsigned long flags, long pages)
 
 static inline void shmem_unacct_blocks(unsigned long flags, long pages)
 {
-	if (flags & VM_NORESERVE)
+	if (flags & VM_NORESERVE) {
 		vm_unacct_memory(pages * VM_ACCT(PAGE_SIZE));
+		memcg_unacct_memory(current->mm, pages * VM_ACCT(PAGE_SIZE));
+	}
 }
 
 static inline bool shmem_inode_acct_block(struct inode *inode, long pages)

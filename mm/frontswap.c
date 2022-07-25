@@ -407,6 +407,7 @@ static int __frontswap_unuse_pages(unsigned long total, unsigned long *unused,
 			continue;
 		}
 		vm_unacct_memory(pages);
+		memcg_unacct_memory(current->mm, pages);
 		*unused = pages_to_unuse;
 		*swapid = si->type;
 		ret = 0;

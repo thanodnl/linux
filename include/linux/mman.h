@@ -80,6 +80,8 @@ static inline void vm_unacct_memory(long pages)
 	vm_acct_memory(-pages);
 }
 
+extern void memcg_unacct_memory(struct mm_struct *mm, long pages);
+
 /*
  * Allow architectures to handle additional protection and flag bits. The
  * overriding macros must be defined in the arch-specific asm/mman.h file.
