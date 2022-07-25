@@ -904,6 +904,13 @@ int __vm_enough_memory(struct mm_struct *mm, long pages, int cap_sys_admin)
 {
 	long allowed;
 
+	struct mem_cgroup *memcg = get_mem_cgroup_from_mm(mm);
+	while (memcg)
+	{
+		percpu_counter_add(&memcg->committed, pages);
+		memcg = parent_mem_cgroup(memcg);
+	}
+
 	vm_acct_memory(pages);
 
 	/*

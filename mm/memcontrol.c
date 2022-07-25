@@ -6305,6 +6305,14 @@ static ssize_t memory_max_write(struct kernfs_open_file *of,
 	return nbytes;
 }
 
+static u64 memory_committed_read(struct cgroup_subsys_state *css,
+			       struct cftype *cft)
+{
+	struct mem_cgroup *memcg = mem_cgroup_from_css(css);
+
+	return percpu_counter_read_positive(&memcg->committed) * PAGE_SIZE;
+}
+
 static void __memory_events_show(struct seq_file *m, atomic_long_t *events)
 {
 	seq_printf(m, "low %lu\n", atomic_long_read(&events[MEMCG_LOW]));
@@ -6441,6 +6449,11 @@ static struct cftype memory_files[] = {
 		.flags = CFTYPE_NOT_ON_ROOT,
 		.seq_show = memory_max_show,
 		.write = memory_max_write,
+	},
+	{
+		.name = "committed",
+		.flags = CFTYPE_NOT_ON_ROOT,
+		.read_u64 = memory_committed_read,
 	},
 	{
 		.name = "events",
