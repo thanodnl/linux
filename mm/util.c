@@ -888,7 +888,7 @@ EXPORT_SYMBOL_GPL(vm_memory_committed);
 int __memcg_enough_memory(struct mm_struct *mm, long pages)
 {
 	struct mem_cgroup *memcg = get_mem_cgroup_from_mm(mm);
-	while (memcg)
+	while (memcg && !mem_cgroup_is_root(memcg))
 	{
 		percpu_counter_add(&memcg->committed, pages);
 		memcg = parent_mem_cgroup(memcg);
@@ -901,7 +901,7 @@ int __memcg_enough_memory(struct mm_struct *mm, long pages)
 void memcg_unacct_memory(struct mm_struct *mm, long pages)
 {
 	struct mem_cgroup *memcg = get_mem_cgroup_from_mm(mm);
-	while (memcg)
+	while (memcg && !mem_cgroup_is_root(memcg))
 	{
 		percpu_counter_add(&memcg->committed, -pages);
 		memcg = parent_mem_cgroup(memcg);
